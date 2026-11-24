@@ -1,14 +1,4 @@
 ---
-layout: section
----
-
-# NVIDIA Jetson
-
-<br>
-<br>
-<Link to="toc" title="Table of Contents"/>
-
----
 level: 2
 ---
 

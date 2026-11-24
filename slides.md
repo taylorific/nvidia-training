@@ -59,5 +59,9 @@ routeAlias: toc
 <Toc columns="2"/>
 
 ---
-src: ./jetson/jetson-slides.md
+src: ./jetson/jetpack7-setup-slides.md
+---
+
+---
+src: ./jetson/displayport-kvm-edid-slides.md
 ---
