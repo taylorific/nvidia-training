@@ -357,28 +357,153 @@ level: 2
 
 # Alternative: install from the Jetson ISO
 
-No host PC. Needs a USB stick and a board already on L4T R35.5 or later.
+No host PC needed. You need:
 
-1. Download the JetPack 7.2.1 ISO from the
-   [JetPack downloads page](https://developer.nvidia.com/embedded/jetpack/downloads)
-2. Write it with **Balena Etcher** ("Flash from file"). Don't just copy the file
-3. Plug in the stick and power on. If it doesn't boot from USB, use the UEFI boot manager
-4. If asked to update the QSPI firmware (capsule update), answer **Y**
-5. In GRUB, choose **Install Jetson ISO r39.2.1**, then **Install on NVMe**
-6. Remove the stick before it reboots, then finish `oem-config`
+- A USB flash drive (everything on it is erased)
+- A monitor and keyboard plugged **directly** into the Jetson, or a host for the
+  serial console
+- A board that already runs **L4T R35.5 or later** (JetPack 5.1.3+)
 
-Then update to 7.2.2 and install the SDK (about an hour):
+Check the board's current release and UEFI firmware before you start:
+
+```bash
+$ head -1 /etc/nv_tegra_release
+# R39 (release), REVISION: 2.2, GCID: 48648412, BOARD: generic, EABI: aarch64, ...
+$ sudo dmidecode -s bios-version
+39.2.2-gcid-48648412
+```
+
+On anything older than R35.5, flash with SDK Manager instead.
+
+<!--
+Requirement: "Jetson ISO can update AGX Orin Developer Kit to L4T r39.2.1 when the
+installed BSP is L4T r35.5 or greater."
+docs.nvidia.com/jetson/agx-orin-devkit/user-guide/latest/quick_start.html
+dmidecode output is from the training Jetson.
+-->
+
+---
+hideInToc: true
+---
+
+# ISO: create the installer USB stick
+
+Download the JetPack 7.2.1 ISO from the
+[JetPack downloads page](https://developer.nvidia.com/embedded/jetpack/downloads):
+
+```text
+jetsoninstaller-r39.2.1-2026-08-07-18-30-47-arm64.iso
+```
+
+Write it with [Balena Etcher](https://etcher.balena.io/):
+
+1. **Flash from file**: pick the ISO
+2. **Select target**: pick the USB flash drive
+3. **Flash!**
+
+Don't copy the ISO onto the stick with Finder, Explorer, or `cp`. That gives
+you a stick with a file on it, not a bootable stick.
+
+---
+hideInToc: true
+---
+
+# ISO: boot from the USB stick
+
+1. Plug the stick into one of the Jetson's USB ports
+2. Power on (or reboot)
+3. If it boots the existing install instead, press **Esc** at the NVIDIA logo to
+   open the UEFI menu, choose **Boot Manager**, and pick the USB flash drive
+
+The installer may not display through a KVM switch, the same problem as
+the 640×480 issue later in this deck. If the screen goes black, connect the
+monitor directly to the Jetson.
+
+<!--
+"If the developer kit does not boot from the USB flash drive automatically, open the
+UEFI boot manager during boot and select the USB flash drive."
+"Some KVM switches and KVM devices may not handle the video output..."
+quick_start.html troubleshooting section.
+-->
+
+---
+hideInToc: true
+---
+
+# ISO: run the installer
+
+1. **QSPI capsule update.** If the firmware is older than the ISO needs, it asks
+   to confirm a capsule update: press **Y**. It runs twice.
+   Don't skip it. If you miss the prompt, restart the install
+2. **GRUB:** choose **Install Jetson ISO r39.2.1** and press Enter
+3. **Storage:** use ↑/↓ to choose, then Enter
+   - **Install on NVMe**: use this on the dev kit with an NVMe SSD
+   - Install on eMMC (for AGX Orin): the built-in 64 GB eMMC
+4. White text scrolls for several minutes while it writes the disk
+5. The Jetson reboots. **Pull the USB stick out** or it boots the installer again
+
+The NVMe option erases the whole drive. There's no partitioning screen.
+
+---
+hideInToc: true
+---
+
+# ISO: finish Ubuntu setup
+
+**With a monitor:** the same `oem-config` screens as the SDK Manager path
+(license, language, time zone, user, hostname).
+
+**Headless:** connect the host to the **USB-C port next to the 40-pin header**,
+unplug the DisplayPort cable, and use the serial console (115200 baud):
+
+```bash
+# macOS
+ls /dev/cu.usbmodem*
+sudo screen /dev/cu.usbmodem<id> 115200
+# Linux
+sudo screen /dev/ttyACM0 115200
+```
+
+Quit `screen` with **Ctrl-A**, **K**, **y**.
+
+With a DisplayPort cable connected, `oem-config` runs on the desktop instead of
+the serial console.
+
+---
+hideInToc: true
+---
+
+# ISO: update to 7.2.2 and install JetPack
+
+The ISO installs 7.2.1 with no SDK components. Update first, then install the
+`nvidia-jetpack` metapackage (about an hour):
 
 ```bash
 sudo apt update
 sudo apt dist-upgrade
 sudo reboot
+
 sudo apt install nvidia-jetpack
 ```
 
+Check that it worked:
+
+```bash
+$ head -1 /etc/nv_tegra_release
+# R39 (release), REVISION: 2.2, ...
+$ apt-cache policy nvidia-jetpack | head -2
+nvidia-jetpack:
+  Installed: 7.2.2-b56
+```
+
+`nvidia-jetpack` pulls in CUDA, cuDNN, TensorRT, VPI, the multimedia API, and the
+NVIDIA Container Toolkit. Docker itself isn't included: SDK Manager installs it,
+the ISO path doesn't.
+
 <!--
-Source: docs.nvidia.com/jetson/agx-orin-devkit/user-guide/latest/quick_start.html
-and setup_jetpack.html. Not tested on the training Jetson, which was flashed with SDK Manager.
+Commands: docs.nvidia.com/jetson/agx-orin-devkit/user-guide/latest/setup_jetpack.html
+7.2.2-b56 is the candidate version in the apt repo on the training Jetson.
+The training Jetson was flashed with SDK Manager; the ISO path is from NVIDIA's docs.
 -->
 
 ---
