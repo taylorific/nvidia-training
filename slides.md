@@ -65,3 +65,7 @@ src: ./jetson/jetpack7-setup-slides.md
 ---
 src: ./jetson/displayport-kvm-edid-slides.md
 ---
+
+---
+src: ./isaac/isaac-sim-slides.md
+---

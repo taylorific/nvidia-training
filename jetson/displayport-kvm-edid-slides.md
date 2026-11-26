@@ -32,10 +32,9 @@ hideInToc: true
 | | |
 |---|---|
 | Hardware | Jetson AGX Orin Developer Kit, 64 GB (Orin GA10B GPU) |
-| OS | Ubuntu 24.04, JetPack 7.x, L4T R39.2.2 |
+| OS | Ubuntu 24.04, JetPack 7.x, L4T R39.2.2, booting from NVMe |
 | NVIDIA driver branch | r595_00 |
 | Desktop | GNOME on **GDM + Xorg** (not Wayland) |
-| Boot device | NVMe |
 | Remote KVM | GL.iNet Comet Pro (HDMI input) |
 | Connection | Jetson DP → DP-to-HDMI adapter → Comet Pro |
 | Goal | 1920×1080 @ 60 Hz |
@@ -277,6 +276,10 @@ sha256sum 1080p.bin
 # ee6ed32b7e136a4562d0699d93655de9360874b0ab122b67db791d75c88ba8c2
 ```
 
+<style>
+.slidev-code { --slidev-code-font-size: 11px; --slidev-code-line-height: 16px; }
+</style>
+
 ---
 hideInToc: true
 layout: two-cols
@@ -383,8 +386,7 @@ hideInToc: true
 
 # Step 4: back up `xorg.conf`
 
-Keep the NVIDIA-supplied file. Make the backup **once** so re-running these
-steps never overwrites it:
+Keep the NVIDIA-supplied file. Back it up **once**, so re-runs never overwrite it:
 
 ```bash
 [ -e /etc/X11/xorg.conf.original ] || \
@@ -410,6 +412,10 @@ Section "Device"
     Option      "AllowEmptyInitialConfiguration" "true"
 EndSection
 ```
+
+<style>
+.slidev-code { --slidev-code-font-size: 11px; --slidev-code-line-height: 16px; }
+</style>
 
 ---
 hideInToc: true

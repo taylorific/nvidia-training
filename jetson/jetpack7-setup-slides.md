@@ -37,6 +37,43 @@ hideInToc: true
 class: text-sm
 ---
 
+# What's a carrier board?
+
+A Jetson **module** is the computer: the SoC, memory, eMMC storage, and power
+management, on a card with one high-density connector. It has no USB
+ports, no Ethernet jack, and no power input of its own.
+
+The **carrier board** is what the module plugs into. It turns the module's
+pins into a usable machine:
+
+- Power input and regulation (barrel jack, USB-C PD)
+- Connectors: USB, Ethernet jacks, DisplayPort, M.2 for NVMe and Wi-Fi, PCIe,
+  MIPI CSI cameras, the 40-pin GPIO header, fan header, buttons
+
+**Example: the AGX Orin dev kit in this course**
+
+```bash
+$ tr '\0' '\n' < /proc/device-tree/compatible
+nvidia,p3737-0000+p3701-0005   # carrier P3737 + module P3701-0005 (AGX Orin 64GB)
+nvidia,p3701-0005              # the module, on a 699-pin connector
+nvidia,tegra234                # the Orin SoC
+```
+
+- A product swaps P3737 for its own carrier, like Connect Tech's Rogue, and
+  uses the vendor's board support package for its pins and device tree
+- Orin NX and Nano modules use a 260-pin SO-DIMM edge instead. The Orin Nano
+  dev kit carrier (P3768) takes either
+
+<!--
+compatible string read from the training Jetson.
+Module/carrier part numbers: docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/IN/QuickStart.html (jetson-agx-orin-devkit = p3737-0000+p3701-0005)
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
 # The current Jetson lineup
 
 | Module | GPU | Memory | AI performance | Power |
@@ -48,8 +85,7 @@ class: text-sm
 | Jetson T4000 (Thor) | Blackwell | 64 GB | up to 1200 TFLOPS (FP4, sparse) | up to 70 W |
 | Jetson T5000 (AGX Thor) | Blackwell | 128 GB | up to 2070 TFLOPS (FP4, sparse) | 40–130 W |
 
-- **This course** uses the **Jetson AGX Orin 64GB Developer Kit**. It can
-  emulate the smaller Orin modules, so you can try a product's power budget on it
+- **This course:** the **AGX Orin 64GB Developer Kit**, which can emulate the smaller Orin modules
 - **Rows aren't comparable:** Orin is rated in INT8 TOPS, Thor in sparse FP4
   TFLOPS (about half that dense). Nano and NX numbers are the JetPack 6.2 "Super" modes
 - **Industrial:** pin-compatible, for harsher environments. **Thor** (2025–26)
@@ -177,16 +213,13 @@ class: text-sm
 
 # Set up a Jetson AGX Orin with JetPack 7
 
-JetPack 7.2 is the first JetPack 7 release that supports Orin. What changes
-from JetPack 6:
-
-| | JetPack 6.2 | JetPack 7.2.2 |
+| | JetPack 6.2 | JetPack 7.2.2 (the first JetPack 7 for Orin) |
 |---|---|---|
 | Jetson Linux (L4T) | R36.4 | **R39.2.2** |
 | Ubuntu | 22.04 | **24.04** |
 | Kernel | 5.15 | **6.8** |
 | CUDA / cuDNN / TensorRT | 12.6 / 9.3 / 10.3 | **13.2 / 9.20 / 11.4** |
-| Install methods | SDK Manager | SDK Manager **or** a bootable Jetson ISO USB stick |
+| Install methods | SDK Manager | SDK Manager **or** a Jetson ISO USB stick |
 | Ethernet interface | `eno1` | **`end0`** |
 | `vcan` module | needs `linux-modules-extra` | **built into the kernel** |
 | Docker + NVIDIA Container Toolkit | | **installed by SDK Manager** |
@@ -222,6 +255,7 @@ References:
 
 ---
 hideInToc: true
+class: text-sm
 ---
 
 # First: is it already set up?
@@ -232,11 +266,8 @@ Check the Ubuntu and Jetson Linux versions:
 $ grep PRETTY_NAME /etc/os-release
 PRETTY_NAME="Ubuntu 24.04.5 LTS"
 
-$ cat /etc/nv_tegra_release
+$ head -1 /etc/nv_tegra_release
 # R39 (release), REVISION: 2.2, GCID: 48648412, BOARD: generic, EABI: aarch64, DATE: Fri Nov 13 07:17:33 AM UTC 2026
-# KERNEL_VARIANT: oot
-TARGET_USERSPACE_LIB_DIR=nvidia
-TARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia
 ```
 
 `R39 ... REVISION: 2.2` is Jetson Linux 39.2.2, which is JetPack 7.2.2.
@@ -858,16 +889,13 @@ sudo apt-get update
 sudo apt-get install libvirt-daemon-system qemu-kvm
 # To install VMs with virt-install
 sudo apt-get install virtinst
-
 # Manage VMs without sudo (the package already adds you to libvirt)
 sudo adduser "$(id -un)" libvirt
 sudo adduser "$(id -un)" kvm
-
 sudo reboot
 ```
 
-`qemu-kvm` pulls in `qemu-system-arm` and the `qemu-efi-aarch64` UEFI firmware.
-libvirt also creates a `default` NAT network on `virbr0`.
+`qemu-kvm` pulls in `qemu-system-arm` and `qemu-efi-aarch64` (UEFI). libvirt adds a `default` NAT network on `virbr0`.
 
 Point `virsh` at the system instance. Otherwise, as a non-root user, it
 manages your private `qemu:///session` instance:
@@ -916,9 +944,7 @@ sudo nmcli connection add type bridge ifname br0 con-name br0
 # Disable STP for faster port activation
 sudo nmcli connection modify br0 bridge.stp no
 sudo nmcli connection modify br0 ipv4.method auto
-# Optional static IP:
-# sudo nmcli connection modify br0 ipv4.addresses "192.168.1.100/24" \
-#   ipv4.gateway "192.168.1.1" ipv4.dns "8.8.8.8" ipv4.method manual
+# Optional static IP: set ipv4.addresses, ipv4.gateway, ipv4.dns, ipv4.method manual
 
 sudo nmcli connection add type bridge-slave ifname end0 master br0 con-name bridge-port-end0
 
@@ -982,7 +1008,6 @@ EOF
 virsh net-define /tmp/host-network.xml
 virsh net-start host-network
 virsh net-autostart host-network
-
 # VM disks, ISOs, and temporary cloud-init images
 for pool in default:/var/lib/libvirt/images \
             iso:/var/lib/libvirt/iso \
@@ -992,7 +1017,6 @@ for pool in default:/var/lib/libvirt/images \
   virsh pool-start "${pool%%:*}"
   virsh pool-autostart "${pool%%:*}"
 done
-
 virsh net-list --all
 virsh pool-list --all
 ```
@@ -1056,6 +1080,10 @@ power_state:
 EOF
 ```
 
+<style>
+.slidev-code { --slidev-code-font-size: 11px; --slidev-code-line-height: 16px; }
+</style>
+
 ---
 hideInToc: true
 ---
@@ -1104,7 +1132,6 @@ virt-install \
   --noautoconsole \
   --console pty,target_type=serial \
   --import
-
 virsh console ubuntu-server-2404
 ```
 
@@ -1115,6 +1142,10 @@ $ cloud-init status --wait
 status: done
 $ ip -br a            # should have an address on your LAN
 ```
+
+<style>
+.slidev-code { --slidev-code-font-size: 11px; --slidev-code-line-height: 16px; }
+</style>
 
 ---
 hideInToc: true
@@ -1178,9 +1209,8 @@ hideInToc: true
 
 # Snapshots and cleanup
 
-Ubuntu 24.04's libvirt 10.0 can't snapshot this VM in a way you can revert:
-internal snapshots are blocked for UEFI guests, and `--disk-only` snapshots
-can't be reverted. Snapshot the disk image with `qemu-img` while the VM is off:
+libvirt 10.0 can't make revertible snapshots of a UEFI guest, so snapshot the
+disk image with `qemu-img` while the VM is off:
 
 ```bash
 DISK=/var/lib/libvirt/images/ubuntu-server-2404.qcow2
@@ -1196,8 +1226,7 @@ sudo qemu-img snapshot -d clean "$DISK"  # delete
 `qemu-img` refuses to touch a running VM's disk (`Failed to get "write" lock`).
 The UEFI variables (NVRAM) aren't part of the snapshot.
 
-Remove the VM entirely. `destroy` powers it off at once, since `shutdown`
-returns before the VM has stopped:
+Remove the VM (`destroy` stops it at once; `shutdown` returns before it stops):
 
 ```bash
 virsh destroy ubuntu-server-2404
