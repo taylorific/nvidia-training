@@ -67,6 +67,10 @@ src: ./jetson/serial-console-slides.md
 ---
 
 ---
+src: ./jetson/pxe-boot-slides.md
+---
+
+---
 src: ./jetson/displayport-kvm-edid-slides.md
 ---
 
