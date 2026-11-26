@@ -63,6 +63,10 @@ src: ./jetson/jetpack7-setup-slides.md
 ---
 
 ---
+src: ./jetson/serial-console-slides.md
+---
+
+---
 src: ./jetson/displayport-kvm-edid-slides.md
 ---
 
