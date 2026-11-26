@@ -10,6 +10,168 @@ layout: section
 
 ---
 level: 2
+---
+
+# What is NVIDIA Jetson?
+
+A small computer for robots, drones, smart cameras, and other machines
+that run AI on the device instead of in the cloud.
+
+- **One chip (SoC):** Arm CPU cores, an NVIDIA GPU, and dedicated engines for
+  deep learning (DLA), vision (PVA), camera input (ISP), and video
+  encode/decode, all sharing one pool of memory
+- **Sold as a module:** the SoC, memory, and storage sit on a module that plugs
+  into a **carrier board**. A developer kit is a module plus NVIDIA's reference
+  carrier. Products use their own carrier
+- **Same software as the data center:** Jetson Linux (L4T, an Ubuntu-based
+  distribution with NVIDIA's kernel and firmware), plus JetPack: CUDA, cuDNN,
+  TensorRT, and containers
+- **Sizes:** **Nano** (entry level), **NX** (mid-range, small), **AGX** (the
+  most compute, the most I/O)
+
+Generations: TK1 (2014, Kepler) → TX1 → TX2 → AGX Xavier (2018, Volta) →
+**Orin** (2022, Ampere) → **Thor** (2025, Blackwell)
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# The current Jetson lineup
+
+| Module | GPU | Memory | AI performance | Power |
+|---|---|---|---|---|
+| Jetson Orin Nano | Ampere | 4 or 8 GB | up to 67 TOPS (INT8) | 7–25 W |
+| Jetson Orin NX | Ampere | 8 or 16 GB | up to 157 TOPS (INT8) | 10–40 W |
+| **Jetson AGX Orin** | Ampere | 32 or **64 GB** | up to **275 TOPS** (INT8) | 15–60 W |
+| Jetson AGX Orin Industrial | Ampere | 64 GB | up to 248 TOPS (INT8) | 15–75 W |
+| Jetson T4000 (Thor) | Blackwell | 64 GB | up to 1200 TFLOPS (FP4, sparse) | up to 70 W |
+| Jetson T5000 (AGX Thor) | Blackwell | 128 GB | up to 2070 TFLOPS (FP4, sparse) | 40–130 W |
+
+- **This course** uses the **Jetson AGX Orin 64GB Developer Kit**. It can
+  emulate the smaller Orin modules, so you can try a product's power budget on it
+- **Rows aren't comparable:** Orin is rated in INT8 TOPS, Thor in sparse FP4
+  TFLOPS (about half that dense). Nano and NX numbers are the JetPack 6.2 "Super" modes
+- **Industrial:** pin-compatible, for harsher environments. **Thor** (2025–26)
+  needs JetPack 7. Orin got JetPack 7 with 7.2
+
+<!--
+Specs: developer.nvidia.com/embedded/jetson-modules, developer.nvidia.com/buy-jetson,
+nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-thor/,
+jetsonhacks.com/2026/01/12/jetpack-7-1-and-jetson-t4000-now-available/
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# AGX: the same chips in cars and hospitals
+
+"AGX" is NVIDIA's name for its top-end autonomous-machine computers. Each SoC
+generation ships in three product lines, with their own boards,
+certifications, lifecycles, and software:
+
+| | Robotics and edge | Automotive | Medical and industrial |
+|---|---|---|---|
+| **Product line** | Jetson AGX | DRIVE AGX | Clara AGX → IGX |
+| **Xavier** (Volta) | Jetson AGX Xavier | DRIVE AGX Xavier, DRIVE AGX Pegasus | Clara AGX dev kit |
+| **Orin** (Ampere) | Jetson AGX Orin | DRIVE AGX Orin | IGX Orin |
+| **Thor** (Blackwell) | Jetson AGX Thor | DRIVE AGX Thor | IGX Thor |
+| **Software** | JetPack, Jetson Linux | DRIVE OS (Linux or QNX) | IGX OS, Holoscan |
+
+CUDA, TensorRT, and containers carry over between them. The boards, OS images,
+and setup steps in this course are Jetson-only.
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# DRIVE AGX and IGX
+
+<div class="grid grid-cols-2 gap-8">
+<div>
+
+### DRIVE AGX: cars
+
+- Driver assistance and self-driving in production vehicles
+- DRIVE OS is safety-certified for automotive (ISO 26262)
+- **Pegasus:** 2 Xavier SoCs + 2 Turing GPUs, for robotaxis
+- **Orin:** 254 TOPS, in production cars such as the Volvo EX90
+- **Thor:** replaced the cancelled DRIVE Atlan.
+  **DRIVE Hyperion** is a full reference car computer and sensor set,
+  with 2 Thor SoCs on one board
+
+</div>
+<div>
+
+### Clara AGX and IGX: hospitals and factories
+
+- Medical devices (endoscopy, ultrasound, surgical robots) and industrial
+  machines
+- **Clara AGX** dev kit: AGX Xavier + RTX 6000 GPU + ConnectX-6 NIC
+- **IGX Orin:** AGX Orin + optional RTX A6000 or RTX 6000 Ada GPU, ConnectX-7
+- **IGX Thor:** T5000, or T7000 with an RTX PRO 6000 Blackwell GPU
+- Functional-safety design and a **10-year** hardware and software lifecycle
+- **Holoscan** streams sensor and video data through AI pipelines in real time
+
+</div>
+</div>
+
+<!--
+DRIVE: en.wikipedia.org/wiki/Nvidia_Drive; nvidianews DRIVE Thor announcement (Thor replaces Atlan);
+nvidia.com/driveagx (Hyperion with two Thor SoCs).
+Clara AGX: developer.nvidia.com/blog/clara-agx-high-performance-development-kit-medical-devices/
+IGX: nvidia.com/en-us/edge-computing/products/igx/;
+developer.nvidia.com/blog/nvidia-igx-thor-powers-industrial-medical-and-robotics-edge-ai-applications/
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# Related NVIDIA hardware and software
+
+<div class="grid grid-cols-2 gap-8">
+<div>
+
+### Hardware
+
+- **DGX Spark** (GB10): a desktop box with a Blackwell GPU and 128 GB, like
+  AGX Thor, but for building and fine-tuning models, not for mounting in a robot.
+  Runs DGX OS, not Jetson Linux
+- **Jetson Orin Nano Super Developer Kit:** the low-cost entry kit. Its
+  carrier also takes Orin NX modules
+- **Older Jetsons:** Jetson Nano, TX1, TX2 (JetPack 4, Ubuntu 18.04) and
+  Xavier NX / AGX Xavier (JetPack 5, Ubuntu 20.04). No JetPack 6 or 7
+- **Partner carriers and rugged boxes** (Seeed, Connect Tech, Forecr, Advantech,
+  and others) put Jetson modules in products
+
+</div>
+<div>
+
+### Software built on Jetson
+
+- **Isaac:** robotics. Isaac ROS (GPU-accelerated ROS 2 packages), Isaac Sim
+  for simulation
+- **Metropolis / DeepStream:** video analytics on camera streams
+- **Holoscan:** real-time sensor pipelines (also on IGX)
+- **Jetson AI Lab:** tutorials and containers for running LLMs and
+  vision-language models on Jetson
+- **JetPack containers** on NGC (`nvcr.io/nvidia/l4t-*`)
+
+</div>
+</div>
+
+<!--
+DGX Spark vs Thor: forums.developer.nvidia.com/t/comparing-ai-performance-of-dgx-spark-to-jetson-thor/343159
+Jetson AI Lab: jetson-ai-lab.com
+-->
+
+---
+level: 2
 class: text-sm
 ---
 
