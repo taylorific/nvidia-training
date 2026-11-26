@@ -63,6 +63,10 @@ src: ./jetson/jetpack7-setup-slides.md
 ---
 
 ---
+src: ./jetson/initrd-flash-slides.md
+---
+
+---
 src: ./jetson/serial-console-slides.md
 ---
 
