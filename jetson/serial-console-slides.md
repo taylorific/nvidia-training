@@ -251,16 +251,104 @@ Why bother:
 - **The UEFI menu over the network:** press Esc in the terminal, from anywhere
 - **No laptop next to the board**
 
-GL.iNet's version of this uses a USB-to-TTL adapter, not a Jetson, and
-there's **no serial panel** in the web UI: it's a shell on the Comet. Check
-the next two slides on your unit before relying on it.
+GL.iNet's own tutorial uses a USB-to-TTL adapter, not a Jetson, and there's
+**no serial panel** in the web UI: it's a shell on the Comet. The Comet Pro's
+firmware already has the driver J26 needs and `minicom`. One setting has to
+change: the Comet's **ATX power polling** types into the Jetson's console.
 
 <!--
 "Plug the USB TTL adapter into the USB port of your KVM device." and
 "minicom -D /dev/ttyUSB0 -b 115200": docs.gl-inet.com/kvm/en/tutorials/how_to_access_serial_console_via_usb_ttl/ (Oct 2026).
 Terminal: docs.gl-inet.com/kvm/en/user_guide/gl-rm10/console_guide/ (Nov 2026): Toolbox > Terminal > Access.
 No Serial panel in Toolbox or Settings in that guide.
-J26 shows up as a USB CDC ACM device (ttyACM), not a USB-to-TTL chip (ttyUSB): not documented by GL.iNet.
+Driver and minicom checked on the training Comet Pro (GL-RM10), 27 Nov 2026: see the next slides.
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# Plug J26 into the Comet
+
+1. Plug the Jetson's **J26** micro-B port into the Comet's spare **USB-A** port
+   with a **data** cable. The USB-C cable that goes to the Jetson for keyboard
+   and mouse stays where it is
+2. In the Comet's web console: **Toolbox** → **Terminal** → **Access**
+3. Check that the Comet found it. From the training Comet Pro:
+
+```text
+bash-5.2# dmesg | grep -i -E "cdc_acm|0955"
+usb 2-1: New USB device found, idVendor=0955, idProduct=7045, bcdDevice= 0.01
+hid-generic 0003:0955:7045.0001: hiddev96: USB HID v1.10 Device [NVIDIA Tegra On-Platform Operator] on usb-214c0000.usb-1/input0
+cdc_acm 2-1:1.1: ttyACM0: USB ACM device
+cdc_acm 2-1:1.3: ttyACM1: USB ACM device
+cdc_acm 2-1:1.5: ttyACM2: USB ACM device
+cdc_acm 2-1:1.7: ttyACM3: USB ACM device
+bash-5.2# command -v minicom picocom screen stty
+/bin/minicom
+/bin/stty
+```
+
+`0955:7045` is the Jetson's **TOPO** debug interface, the same four ports a
+Linux laptop gets. `ttyACM0` is the console. No `ttyUSB` device: J26 isn't a
+USB-to-TTL chip, so the `/dev/ttyUSB0` in GL.iNet's tutorial doesn't apply.
+
+<style>
+.slidev-code { --slidev-code-font-size: 10px; --slidev-code-line-height: 15px; }
+</style>
+
+<!--
+Training Comet Pro: Linux glkvm 6.1.141 aarch64, root shell (bash-5.2). /sys/bus/usb/drivers/ lists
+cdc_acm, cp210x, ftdi_sio, ch341, pl2303, usbserial_generic, so USB-TTL adapters also work.
+/etc/glversion is empty on this firmware. /dev/ttyACM* are root:dialout 660; the terminal is root.
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# Turn off the Comet's ATX polling first
+
+**Symptom:** junk at the Jetson's login prompt, and every login fails:
+
+```text
+agx login: GET_POWER_STATE
+Password: GET_POWER_STATE
+Login incorrect
+```
+
+**Cause:** the Comet looks for its own ATX power board at `/dev/ttyACM0` and
+polls it every few seconds (`/usr/sbin/atxpower /dev/ttyACM0 power_state`,
+started by `kvmd`). The Jetson's console took that name, so it gets the polls.
+
+**Fix:** turn off kvmd's ATX plugin. The Comet's web UI is
+[PiKVM](https://docs.pikvm.org/first_steps/#structure-of-configuration-files)'s `kvmd`, so it goes in `override.yaml`:
+
+```bash
+printf 'kvmd:\n    atx:\n        type: disabled\n' >> /etc/kvmd/override.yaml
+kvmd -m >/dev/null && echo "config OK"          # validate before restarting
+/etc/init.d/S98kvmd restart                     # no systemd on the Comet
+pgrep -fa atxpower || echo "atxpower not running"
+```
+
+**Undo:** `sed -i '/^kvmd:/,$d' /etc/kvmd/override.yaml && /etc/init.d/S98kvmd restart`
+
+The ATX power buttons leave the web UI; they only drive the Comet's ATX board
+in a PC anyway. A Comet firmware update may reset `override.yaml`.
+
+<style>
+.slidev-code { --slidev-code-font-size: 10px; --slidev-code-line-height: 15px; }
+</style>
+
+<!--
+Found on the training Comet Pro, 27 Nov 2026. kvmd -m showed "atx: type: glatx" (GL.iNet's plugin,
+kvmd/plugins/atx/glatx.pyc); "disabled.pyc" ships alongside it. atxpower sends "GET_POWER_STATE" and
+expects "RCV: GET_POWER_STATE" plus a number back. glatx has no option for the device path.
+"Stopping kvmd: FAIL" from the init script is harmless: the restart still replaced the process.
+The sed undo assumes the kvmd: block is the last thing in override.yaml (it's all comments by default).
+Run the printf once: twice gives two kvmd: sections.
 -->
 
 ---
@@ -270,67 +358,42 @@ class: text-sm
 
 # Open the console from the Comet
 
-1. Plug the Jetson's **J26** micro-B cable into the Comet's USB port. The
-   USB-C cable that goes to the Jetson for keyboard and mouse stays where it is
-2. In the Comet's web console: **Toolbox** → **Terminal** → **Access**
-3. Find the device and connect:
-
 ```bash
-dmesg | tail                      # look for cdc_acm and ttyACM0
-ls /dev/ttyACM* /dev/ttyUSB*      # J26 gives four ttyACM ports: ttyACM0 is the console
-
-minicom -D /dev/ttyACM0 -b 115200            # quit: Ctrl-A, X
-minicom -D /dev/ttyACM0 -b 115200 -C /tmp/orin-boot.log   # and capture to a file
+minicom -D /dev/ttyACM0 -b 115200                          # quit: Ctrl-A, X
+minicom -D /dev/ttyACM0 -b 115200 -C /tmp/orin-boot.log    # and capture to a file
 ```
 
-In `minicom`, turn off **hardware flow control** (Ctrl-A, O, Serial port
-setup) if nothing you type gets through.
+Press **Enter** for a clean `agx login:`. Reboot the Jetson with the console
+open and the whole boot comes through: MB1/MB2, BPMP, OP-TEE, UEFI, kernel. At
+the UEFI banner you get the boot menu, from the training Jetson:
 
-No `minicom`? A read-only console works with just the shell:
-
-```bash
-(stty 115200 raw -echo; cat) < /dev/ttyACM0 | tee /tmp/orin-boot.log
+```text
+t23x_general System firmware
+version 39.2.2-gcid-48648412
+date 2026-11-13T06:10:56+00:00
+ESC   to enter Setup.
+F11   to enter Boot Manager Menu.
+s     to enter Shell.
+Enter to continue boot.
+EFI stub: Booting Linux Kernel...
 ```
 
-Files in `/tmp` on the Comet don't survive its reboot. Copy them off first.
+Without `minicom`: `(stty 115200 raw -echo; cat) < /dev/ttyACM0 | tee /tmp/orin-boot.log`
+(read-only). Copy captures off the Comet before you reboot it.
+
+**Security:** the Comet is now a path into the Jetson's console, so keep its
+firmware updated and its web UI off the open internet.
+
+<style>
+.slidev-code { --slidev-code-font-size: 10px; --slidev-code-line-height: 15px; }
+</style>
 
 <!--
-minicom command and 115200: GL.iNet USB-TTL tutorial. "Use minicom -s ... modify the device path and
-flow control configuration": forum.gl-inet.com/t/how-to-use-usb-to-serial-on-comet/59416 (Jun 2025).
--C capture file and Ctrl-A X exit are standard minicom.
-The /tmp persistence note is an assumption about the Comet's filesystem: check it on the unit.
--->
-
----
-hideInToc: true
-class: text-sm
----
-
-# Check it on your Comet first
-
-None of this is documented for a Jetson. Run these in the Comet's terminal:
-
-```bash
-ls /sys/bus/usb/drivers/ | grep -e cdc_acm -e cp210x -e ftdi_sio -e ch341
-command -v minicom screen picocom
-```
-
-| Result | What it means |
-|---|---|
-| `cdc_acm` is listed | J26 should appear as `/dev/ttyACM0`–`3` |
-| No `cdc_acm` | J26 won't show up. Both of the Jetson's console ports are CDC ACM devices, and the debug UART only comes out through J26. Plug J26 into another small Linux box instead |
-| No `minicom` | Use the `stty` and `cat` line on the previous slide, or ask GL.iNet. A forum test build added `minicom` to a 1.7.0 Comet firmware |
-
-**Power control:** the Comet's ATX board is made for a PC's front-panel
-header. Nothing documents it on a Jetson: use the buttons, or TOPO from a Linux
-host. **Security:** the Comet is now a path into the Jetson's console, so keep
-its firmware updated and its web UI off the open internet.
-
-<!--
-Forum: some USB-serial cables (TRENDnet TU-S9, USB-to-RJ45) not recognized as ttyUSB (Nov 6, 2025);
-test firmware "RM1PE-1.7.0release1.img" with minicom added (Nov 13, 2025): that build is for the
-GL-RM1PE (Comet PoE), not the Comet Pro (GL-RM10).
-ATX board: docs.gl-inet.com/kvm/en/user_guide/gl-rm10/console_guide/ (Accessories > ATX Power).
+Captured on the training Comet Pro with minicom -C, 27 Nov 2026: 1,823 lines from shutdown to login,
+kernel 6.8.12-1029-tegra, "console=ttyTCU0,115200" on the kernel command line. The login banner names the
+port ttyTCU0 ("Ubuntu 24.04.5 LTS agx ttyTCU0").
+If typing doesn't get through, turn off hardware flow control in minicom (Ctrl-A, O, Serial port setup).
+The Comet sees TOPO's HID interface too (hiddev96), but has no boardctl, so power/reset/recovery over
+TOPO from the Comet is untested.
 The 40-pin header UART is not the debug console on the dev kit, so a USB-TTL adapter there doesn't help.
-Not yet tried on the training Comet Pro.
 -->

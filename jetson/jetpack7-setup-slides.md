@@ -74,6 +74,83 @@ hideInToc: true
 class: text-sm
 ---
 
+# Module and carrier, in photos
+
+<div class="grid grid-cols-2 gap-6">
+<figure>
+<img src="/images/jetson-hw/nano-module-on-carrier-side.jpg" class="h-56 mx-auto rounded shadow" />
+<figcaption class="text-xs text-center mt-2">
+<b>Jetson Nano dev kit, from the side.</b> The module (with the heatsink)
+plugs into the SO-DIMM slot on the carrier underneath
+</figcaption>
+</figure>
+<figure>
+<img src="/images/jetson-hw/orin-nx-module-partner-carrier.jpg" class="h-56 mx-auto rounded shadow" />
+<figcaption class="text-xs text-center mt-2">
+<b>Jetson Orin NX module</b> in a partner's industrial carrier board, no
+heatsink fitted. The SoC is the large chip in the middle
+</figcaption>
+</figure>
+</div>
+
+The same NX or Nano module works in any carrier made for its 260-pin edge.
+The carrier decides the ports, power input, and size.
+
+<div class="text-[0.6rem] opacity-60 mt-4">
+Photos: Thomas Amberg, <a href="https://commons.wikimedia.org/wiki/File:NVIDIA_Jetson_Nano_Developer_Kit_(40790261993).jpg">CC BY-SA 2.0</a>;
+4300streetcar, <a href="https://commons.wikimedia.org/wiki/File:Nvidia_Jetson_Orin_NX_on_a_motherboard_Computex_2025.jpg">CC BY 4.0</a>. Resized.
+</div>
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# Jetson dev kits over the generations
+
+<div class="grid grid-cols-4 gap-3">
+<figure>
+<img src="/images/jetson-hw/tk1-devkit.jpg" class="h-32 w-full object-contain" />
+<figcaption class="text-xs text-center"><b>TK1</b> (2014): one board, SoC soldered on, no module</figcaption>
+</figure>
+<figure>
+<img src="/images/jetson-hw/agx-xavier-devkit-carrier.jpg" class="h-32 w-full object-contain" />
+<figcaption class="text-xs text-center"><b>AGX Xavier</b> (2018): the carrier board. The module and heatsink are on the other side</figcaption>
+</figure>
+<figure>
+<img src="/images/jetson-hw/nano-devkit-top.jpg" class="h-32 w-full object-contain" />
+<figcaption class="text-xs text-center"><b>Jetson Nano</b> (2019): 260-pin SO-DIMM module on a small carrier</figcaption>
+</figure>
+<figure>
+<img src="/images/jetson-hw/agx-orin-devkit.jpg" class="h-32 w-full object-contain" />
+<figcaption class="text-xs text-center"><b>AGX Orin</b> (2022): the kit in this course, module and carrier in one enclosure</figcaption>
+</figure>
+</div>
+
+From TX1 on, every Jetson is a **module plus carrier**. The AGX modules use a
+699-pin board-to-board connector, the Nano and NX modules a 260-pin SO-DIMM
+edge. The Orin Nano dev kit looks like the Jetson Nano kit, with a
+different module and carrier (P3768).
+
+<div class="text-[0.6rem] opacity-60 mt-2">
+Photos from Wikimedia Commons, resized:
+Gareth Halfacree, <a href="https://commons.wikimedia.org/wiki/File:Nvidia_Jetson_TK1_-_Full_Board_(14672953894).png">CC BY-SA 2.0</a>;
+Solomon203, <a href="https://commons.wikimedia.org/wiki/File:NVIDIA_P2972_20190601b.jpg">CC BY-SA 4.0</a>;
+SparkFun Electronics, <a href="https://commons.wikimedia.org/wiki/File:NVIDIA_Jetson_Nano_Developer_Kit_(40650423303).jpg">CC BY 2.0</a>;
+Auledas, <a href="https://commons.wikimedia.org/wiki/File:NVidia_Jetson_Orin_AGX.png">CC BY 4.0</a>.
+</div>
+
+<!--
+No openly licensed photos found for AGX Thor, TX1/TX2, or the Orin Nano (Super) dev kit on
+Wikimedia Commons (searched 27 Nov 2026). NVIDIA's product photos aren't openly licensed.
+A photo of the training AGX Orin with the module removed from the carrier would fill the gap.
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
 # The current Jetson lineup
 
 | Module | GPU | Memory | AI performance | Power |
@@ -801,36 +878,38 @@ class: text-sm
 
 # ISO: update to 7.2.2 and install JetPack
 
-The ISO installs 7.2.1 with no SDK components. Update first, then install the
-`nvidia-jetpack` metapackage (about an hour):
+The ISO installs 7.2.1 with no SDK. Update, reboot, then install the
+`nvidia-jetpack` metapackage:
 
 ```bash
 sudo apt update
-sudo apt dist-upgrade        # 467 packages, including Jetson Linux 39.2.2
+sudo apt dist-upgrade        # 467 packages, Jetson Linux 39.2.1 -> 39.2.2: 9 min
 sudo reboot
-
-sudo apt install nvidia-jetpack
-sudo usermod -aG docker "$USER"   # then log out and back in
+sudo apt install nvidia-jetpack     # 151 packages, 7 GB download: 3 min here
+sudo usermod -aG docker "$USER"     # then log out and back in
 ```
 
-Check that it worked:
+On the training Jetson afterwards:
 
-```bash
-$ head -1 /etc/nv_tegra_release
-# R39 (release), REVISION: 2.2, ...
-$ apt-cache policy nvidia-jetpack | head -2
-nvidia-jetpack:
-  Installed: 7.2.2-b56
+```text
+# R39 (release), REVISION: 2.2, GCID: 48648412, BOARD: generic, EABI: aarch64, ...
+nvidia-jetpack     7.2.2-b56
+cuda-toolkit-13-2  13.2.2-1        (nvcc: Cuda compilation tools, release 13.2, V13.2.86)
+libcudnn9-cuda-13  9.20.0.46-1
+tensorrt           11.4.1.31-1+cuda13.4
 ```
 
-`nvidia-jetpack` pulls in CUDA, cuDNN, TensorRT, VPI, and the multimedia API.
-Docker and the NVIDIA Container Toolkit are already there from the ISO.
+- **Behind the KVM workaround?** If apt asks about `/etc/X11/xorg.conf`, keep your
+  version (**N**), or the desktop drops back to 640×480
+- The upgrade **replaces the Firefox `.deb` with the snap**, and installs Thunderbird
+- `nvidia-jetpack` swaps Ubuntu's OpenCV 4.6 `-dev` packages for NVIDIA's build
+- The bootloader package stages a firmware capsule, applied on the reboot.
+  On this board the firmware was already 39.2.2 and stayed so
 
 <!--
-Commands: docs.nvidia.com/jetson/agx-orin-devkit/user-guide/latest/setup_jetpack.html
-7.2.2-b56 is the candidate version in the apt repo on the training Jetson.
-The ISO-installed state before the update was checked over SSH on 26 Nov 2026; the
-dist-upgrade and nvidia-jetpack install haven't been run on it yet.
+Run on the training Jetson 26-27 Nov 2026 with ~/jetson-update.sh (apt with --force-confold, so the
+CustomEDID xorg.conf was kept automatically). Logs: /var/log/jetson-update-stage1.log and -stage2.log.
+Timings depend on the network: stage 2 downloaded 6,998 MB in about 3 minutes.
 -->
 
 ---
