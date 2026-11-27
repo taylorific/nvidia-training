@@ -237,7 +237,7 @@ hideInToc: true
 # The developer kit hardware
 
 - **Display:** DisplayPort only. For HDMI you need a DisplayPort (male) to HDMI
-  (female) adapter. Behind a KVM, see the 640×480 workaround later in this section
+  (female) adapter. Behind a KVM, see the 640×480 workaround later in the deck
 - **Power:** the included brick on the barrel jack, or USB-C on the back
 - **Flashing port:** the USB-C port **next to the 40-pin header** (J40).
   It's the only USB-C port that works as a device (UFP)
