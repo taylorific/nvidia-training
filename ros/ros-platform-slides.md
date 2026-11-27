@@ -335,7 +335,8 @@ ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False
 | Symptom | Cause | Fix |
 |---|---|---|
 | RViz opens, but no Gazebo window | `headless` defaults to true | `headless:=False` |
-| No map, robot won't move, "Timed out waiting for transform" | AMCL waits for a starting pose. There's no `map`→`odom` transform until it gets one | **2D Pose Estimate** in RViz, then the Nav2 Goal |
+| No map, robot won't move, "Timed out waiting for transform" | AMCL waits for a starting pose. There's no `map`→`odom` transform until it gets one | **2D Pose Estimate** in RViz within about a minute, then the Nav2 Goal |
+| Every goal: "Action server is inactive. Rejecting the goal" | The pose came too late: bringup timed out and aborted. A lifecycle reset also clears AMCL's pose | Relaunch and set the pose right away |
 | TF "extrapolation" errors, "Message Filter dropping message" | Some nodes use wall-clock time, others sim time | `use_sim_time:=True` for every node, and bridge `/clock` |
 | Robot gets goals but never moves | `cmd_vel` type mismatch: newer Nav2 publishes `TwistStamped`, many drivers and bridges expect `Twist` | Match `enable_stamped_cmd_vel` to what the base subscribes to |
 | Works in sim, not on the robot | Frame names (`base_link` vs `base_footprint`), lidar frame missing from TF | `ros2 run tf2_tools view_frames` and compare with the Nav2 config |
@@ -357,6 +358,11 @@ nav2-minimal-tb3-sim and tb4-sim 1.3.0, slam-toolbox 2.10.0, ros-gz 3.0.10 (Gaze
 gz-*-vendor packages), 64 ros-lyrical-nav2-* packages. No ros-lyrical-turtlebot3. Isaac ROS release-5
 (noble-jetpack) adds isaac-ros-nvblox and nvblox-nav2 5.1.0. Nav2 + bringup is 318 packages on top of
 ros-lyrical-desktop.
+Tested on the training Jetson, 27 Nov 2026 (Lyrical, Nav2 1.5.2, headless): with no pose for ~60 s,
+"Failed to activate global_costmap because transform from base_link to map did not become available before
+timeout" then "Failed to bring up all requested nodes. Aborting bringup."; goals were then rejected. Relaunched
+and set the pose at 6 s: Nav2 active at 13 s, goal (-2,-0.5) -> (2,0.5) SUCCEEDED in 18 s, real-time factor
+~1.0, MODE_30W.
 TwistStamped: Nav2 added enable_stamped_cmd_vel when moving to stamped velocity commands; check the default
 for your Nav2 release.
 -->
