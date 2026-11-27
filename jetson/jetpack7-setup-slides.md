@@ -553,8 +553,8 @@ level: 2
 No host PC needed. You need:
 
 - A USB flash drive (everything on it is erased)
-- A monitor and keyboard plugged **directly** into the Jetson, or a host for the
-  serial console
+- A monitor and keyboard on the Jetson, a KVM such as the Comet Pro, or a host
+  for the serial console
 - A board that already runs **L4T R35.5 or later** (JetPack 5.1.3+)
 
 Check the board's current release and UEFI firmware before you start:
@@ -568,11 +568,16 @@ $ sudo dmidecode -s bios-version
 
 On anything older than R35.5, flash with SDK Manager instead.
 
+**Tested on the training Jetson** (26 Nov 2026), through the GL.iNet Comet
+Pro: about **20 minutes** from the GRUB menu to the setup screens, and
+**30 minutes** to the desktop.
+
 <!--
 Requirement: "Jetson ISO can update AGX Orin Developer Kit to L4T r39.2.1 when the
 installed BSP is L4T r35.5 or greater."
 docs.nvidia.com/jetson/agx-orin-devkit/user-guide/latest/quick_start.html
 dmidecode output is from the training Jetson.
+Timings from the screenshot timestamps: GRUB 18:10, first setup screen 18:29, desktop 18:37.
 -->
 
 ---
@@ -599,52 +604,117 @@ you a stick with a file on it, not a bootable stick.
 
 ---
 hideInToc: true
+class: text-sm
 ---
 
 # ISO: boot from the USB stick
 
-1. Plug the stick into one of the Jetson's USB ports
-2. Power on (or reboot)
-3. If it boots the existing install instead, press **Esc** at the NVIDIA logo to
-   open the UEFI menu, choose **Boot Manager**, and pick the USB flash drive
+Plug the stick into a USB port on the Jetson and power on. If it boots the
+existing install, press **Esc** at the NVIDIA logo, then **Boot Manager** and
+the USB drive:
 
-The installer may not display through a KVM switch, the same problem as
-the 640×480 issue later in this deck. If the screen goes black, connect the
-monitor directly to the Jetson.
+<div class="grid grid-cols-2 gap-4">
+<img src="/images/jetpack7-iso/uefi-main-menu.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/uefi-boot-manager.png" class="rounded shadow" />
+</div>
+
+The firmware version is on the first screen (`39.2.2-gcid-48648412` here).
+The Boot Manager lists every boot entry, including the PXE and HTTP ones from
+the PXE section.
 
 <!--
+Screenshots from the training Jetson through the GL.iNet Comet Pro, 26 Nov 2026.
 "If the developer kit does not boot from the USB flash drive automatically, open the
-UEFI boot manager during boot and select the USB flash drive."
-"Some KVM switches and KVM devices may not handle the video output..."
-quick_start.html troubleshooting section.
+UEFI boot manager during boot and select the USB flash drive." (quick_start.html)
 -->
 
 ---
 hideInToc: true
+class: text-sm
 ---
 
 # ISO: run the installer
 
-1. **QSPI capsule update.** If the firmware is older than the ISO needs, it asks
-   to confirm a capsule update: press **Y**. It runs twice.
-   Don't skip it. If you miss the prompt, restart the install
-2. **GRUB:** choose **Install Jetson ISO r39.2.1** and press Enter
-3. **Storage:** use ↑/↓ to choose, then Enter
-   - **Install on NVMe**: use this on the dev kit with an NVMe SSD
-   - Install on eMMC (for AGX Orin): the built-in 64 GB eMMC
-4. White text scrolls for several minutes while it writes the disk
-5. The Jetson reboots. **Pull the USB stick out** or it boots the installer again
+<div class="grid grid-cols-2 gap-4">
+<img src="/images/jetpack7-iso/grub-install-iso.png" class="h-52 mx-auto rounded shadow" />
+<img src="/images/jetpack7-iso/grub-storage.png" class="h-52 mx-auto rounded shadow" />
+</div>
 
-The NVMe option erases the whole drive. There's no partitioning screen.
+1. **GRUB:** choose **Install Jetson ISO r39.2.1**
+2. **Storage:** **Install on NVMe** for the dev kit with an SSD. The menu also
+   has USB, eMMC (AGX Orin only), and microSD, plus a rescue shell and a disc check
+3. **QSPI capsule update:** only if the firmware is older than the ISO's. Then
+   press **Y** when asked (it runs twice) and don't skip it. Skipped here: the board
+   already had newer 39.2.2 firmware, and the ISO left it alone
+
+The NVMe option erases the whole drive, with no partitioning screen. The eMMC
+isn't touched, so an old install there stays second in the boot order.
+
+<!--
+GRUB menus from the training Jetson. Capsule update behavior: quick_start.html; on the
+training Jetson the UEFI firmware stayed at 39.2.2 (bios_version) after installing the 39.2.1 ISO.
+eMMC APP partitions and boot order checked over SSH after the install.
+-->
 
 ---
 hideInToc: true
+class: text-sm
+---
+
+# ISO: while it installs
+
+<img src="/images/jetpack7-iso/installing-packages.png" class="h-60 mx-auto rounded shadow" />
+
+- It's Ubuntu's **Server installer** (Subiquity, from Ubuntu 24.04.3 media)
+  running an automated install of NVIDIA's package list: "Installing many
+  packages, wait for 15mins"
+- The installer's text console showed at **1920×1080** through the KVM
+- It reboots into the new system by itself. It booted the NVMe here even with
+  the stick still in, because the NVMe stays first in the boot order. Take the
+  stick out anyway
+- Logs: `/var/log/installer/` on the new system, and a copy on the stick's
+  `writable` partition
+
+<!--
+/var/log/installer/media-info: "Ubuntu-Server 24.04.3 LTS "Noble Numbat" - Release arm64 (20250806.1)".
+Files there include autoinstall-user-data, curtin-install.log, subiquity-client-debug.log.
+Stick partition sda4 "writable" holds install-logs-2026-11-26.0/.
+efibootmgr after install: BootOrder 0001 (Samsung NVMe) first, USB stick 0009 last.
+-->
+
+---
+hideInToc: true
+class: text-sm
 ---
 
 # ISO: finish Ubuntu setup
 
-**With a monitor:** the same `oem-config` screens as the SDK Manager path
-(license, language, time zone, user, hostname).
+The same `oem-config` screens as the SDK Manager path:
+
+<div class="grid grid-cols-3 gap-3">
+<img src="/images/jetpack7-iso/oem-welcome.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/oem-typing.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/oem-license.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/oem-timezone.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/oem-about-you.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/oem-done.png" class="rounded shadow" />
+</div>
+
+Language, keyboard, NVIDIA's license, Wi-Fi (Skip on wired Ethernet), time zone,
+user and **Computer** name (the hostname), password, done. Behind the KVM these
+run at **640×480**: the EDID problem later in the deck.
+
+<!--
+Screenshots from the training Jetson, 26 Nov 2026. The Wi-Fi screen is left out: it lists
+nearby networks by name. The KVM status bar shows "WebRTC H.264 - 640x480" from oem-config on.
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# ISO: setup without a display
 
 **Headless:** connect the host to the **USB-C port next to the 40-pin header**,
 unplug the DisplayPort cable, and use the serial console (115200 baud):
@@ -652,18 +722,81 @@ unplug the DisplayPort cable, and use the serial console (115200 baud):
 ```bash
 # macOS
 ls /dev/cu.usbmodem*
-sudo screen /dev/cu.usbmodem<id> 115200
+screen /dev/cu.usbmodem<id> 115200
 # Linux
 sudo screen /dev/ttyACM0 115200
 ```
 
-Quit `screen` with **Ctrl-A**, **K**, **y**.
+Quit `screen` with **Ctrl-A**, **K**, **y**. See the serial console section for
+more.
 
 With a DisplayPort cable connected, `oem-config` runs on the desktop instead of
 the serial console.
 
 ---
 hideInToc: true
+class: text-sm
+---
+
+# ISO: first login
+
+GNOME asks a few more questions on the first login:
+
+<div class="grid grid-cols-3 gap-3">
+<img src="/images/jetpack7-iso/gnome-welcome.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/gnome-ubuntu-pro.png" class="rounded shadow" />
+<img src="/images/jetpack7-iso/gnome-help-improve.png" class="rounded shadow" />
+</div>
+
+**Ubuntu Pro:** Skip (free for up to 5 machines if you want it). **Help improve
+Ubuntu:** "Yes" is preselected: pick **No** if the board shouldn't report to
+Canonical. Then **Finish**.
+
+<img src="/images/jetpack7-iso/desktop.png" class="h-36 float-right ml-4 rounded shadow" />
+
+The desktop comes up on **Ubuntu 24.04.4** in power mode **30 W**, not MAXN.
+See "Set the power mode to MAXN" below.
+
+<!--
+Screenshots from the training Jetson. nvpmodel -q after install: "NV Power Mode: MODE_30W" (mode 2).
+-->
+
+---
+hideInToc: true
+class: text-sm
+---
+
+# ISO: what you have after the install
+
+Checked over SSH on the training Jetson right after the install:
+
+```bash
+$ head -1 /etc/nv_tegra_release
+# R39 (release), REVISION: 2.1, GCID: 46758480, BOARD: generic, EABI: aarch64, ...
+$ cat /sys/class/dmi/id/bios_version            # the firmware wasn't downgraded
+39.2.2-gcid-48648412
+$ apt-cache policy nvidia-jetpack | head -3
+nvidia-jetpack:
+  Installed: (none)
+  Candidate: 7.2.2-b56
+$ apt list --upgradable 2>/dev/null | grep -c /
+467
+```
+
+| Installed | Not installed |
+|---|---|
+| Jetson Linux **39.2.1**, Ubuntu 24.04.4, root on NVMe | CUDA, cuDNN, TensorRT (`nvidia-jetpack`) |
+| Docker (Ubuntu's `docker.io` 29.1.3), running | Your user in the `docker` group |
+| NVIDIA Container Toolkit 1.19.1 | |
+
+<!--
+All output from the training Jetson over SSH, 26 Nov 2026, 15 minutes after the first boot.
+Upgradable includes nvidia-l4t-core, nvidia-l4t-kernel and nvidia-l4t-bootloader 39.2.2.
+-->
+
+---
+hideInToc: true
+class: text-sm
 ---
 
 # ISO: update to 7.2.2 and install JetPack
@@ -673,10 +806,11 @@ The ISO installs 7.2.1 with no SDK components. Update first, then install the
 
 ```bash
 sudo apt update
-sudo apt dist-upgrade
+sudo apt dist-upgrade        # 467 packages, including Jetson Linux 39.2.2
 sudo reboot
 
 sudo apt install nvidia-jetpack
+sudo usermod -aG docker "$USER"   # then log out and back in
 ```
 
 Check that it worked:
@@ -689,14 +823,14 @@ nvidia-jetpack:
   Installed: 7.2.2-b56
 ```
 
-`nvidia-jetpack` pulls in CUDA, cuDNN, TensorRT, VPI, the multimedia API, and the
-NVIDIA Container Toolkit. Docker itself isn't included: SDK Manager installs it,
-the ISO path doesn't.
+`nvidia-jetpack` pulls in CUDA, cuDNN, TensorRT, VPI, and the multimedia API.
+Docker and the NVIDIA Container Toolkit are already there from the ISO.
 
 <!--
 Commands: docs.nvidia.com/jetson/agx-orin-devkit/user-guide/latest/setup_jetpack.html
 7.2.2-b56 is the candidate version in the apt repo on the training Jetson.
-The training Jetson was flashed with SDK Manager; the ISO path is from NVIDIA's docs.
+The ISO-installed state before the update was checked over SSH on 26 Nov 2026; the
+dist-upgrade and nvidia-jetpack install haven't been run on it yet.
 -->
 
 ---

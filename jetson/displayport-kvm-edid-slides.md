@@ -49,6 +49,7 @@ GNOME display settings offer nothing above 640×480. Read the EDID the kernel re
 
 ```bash
 sudo apt install edid-decode
+ls -d /sys/class/drm/card*-DP-*      # the card number varies: card2 here, card0 after an ISO install
 edid-decode /sys/class/drm/card2-DP-1/edid
 ```
 
