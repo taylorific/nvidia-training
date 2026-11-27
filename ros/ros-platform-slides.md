@@ -351,9 +351,12 @@ td, th { padding-top: 0.2rem !important; padding-bottom: 0.2rem !important; }
 Quickstart from docs.nav2.org (docs/getting_started/quickstart/quickstart.md): "headless defaults to true;
 if not set to false, gzclient (the 3d view) is not started." "By default, Nav2 waits for you to give it an
 approximate starting position." "Nav2 does not currently release binaries on rolling".
-On a Jetson with Lyrical from NVIDIA's repository, check that Nav2 is there first:
-apt-cache policy ros-lyrical-navigation2 ros-lyrical-ros-gz. NVIDIA builds "the ROS 2 packages required by
-Isaac ROS", which may not include all of Nav2 or ros_gz.
+Checked on the training Jetson (JetPack 7.2.2), 27 Nov 2026: NVIDIA's buildfarm repository
+(isaac.download.nvidia.com/isaac-ros/ubuntu/main noble) has ros-lyrical-navigation2 and nav2-bringup 1.5.2,
+nav2-minimal-tb3-sim and tb4-sim 1.3.0, slam-toolbox 2.10.0, ros-gz 3.0.10 (Gazebo through the
+gz-*-vendor packages), 64 ros-lyrical-nav2-* packages. No ros-lyrical-turtlebot3. Isaac ROS release-5
+(noble-jetpack) adds isaac-ros-nvblox and nvblox-nav2 5.1.0. Nav2 + bringup is 318 packages on top of
+ros-lyrical-desktop.
 TwistStamped: Nav2 added enable_stamped_cmd_vel when moving to stamped velocity commands; check the default
 for your Nav2 release.
 -->
