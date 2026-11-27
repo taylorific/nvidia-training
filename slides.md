@@ -89,3 +89,7 @@ src: ./jetson/displayport-kvm-edid-slides.md
 ---
 src: ./isaac/isaac-sim-slides.md
 ---
+
+---
+src: ./ros/ros-platform-slides.md
+---
