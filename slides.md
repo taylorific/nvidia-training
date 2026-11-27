@@ -67,6 +67,10 @@ src: ./jetson/initrd-flash-slides.md
 ---
 
 ---
+src: ./jetson/backup-restore-slides.md
+---
+
+---
 src: ./jetson/serial-console-slides.md
 ---
 

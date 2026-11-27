@@ -138,7 +138,7 @@ The password ends up in your shell history. Change it after the first login.
 <!--
 l4t_flash_prerequisites.sh and apply_binaries.sh: QuickStart.html (r39.2).
 l4t_create_default_user.sh options and defaults: FlashingSupport.html "Skipping oem-config" (r39.2).
-The page doesn't give the script's directory; tools/ is where it is in the BSP.
+Script location Linux_for_Tegra/tools/l4t_create_default_user.sh checked in the R39.2.2 BSP.
 -->
 
 ---
@@ -170,8 +170,8 @@ sudo ./tools/kernel_flash/l4t_initrd_flash.sh \
 
 <!--
 Command: QuickStart.html (r39.2) for the AGX Orin devkit NVMe case. The page prints it as
-"sudo ./l4t_initrd_flash.sh"; the script lives in tools/kernel_flash/, as in every other example on
-FlashingSupport.html.
+"sudo ./l4t_initrd_flash.sh": in the R39.2.2 BSP that's a symlink to tools/kernel_flash/l4t_initrd_flash.sh,
+so both work.
 flash_l4t_t234_nvme.xml "supports external media with a storage capacity of 64GB or higher" (FlashingSupport.html).
 Not yet run with these exact arguments on the training Jetson (it was flashed with SDK Manager).
 -->
@@ -257,7 +257,7 @@ class: text-sm
 | Update only the QSPI firmware | `flash.sh --no-systemimg -c bootloader/generic/cfg/flash_t234_qspi.xml jetson-agx-orin-devkit nvme0n1p1` |
 | Flash the built-in eMMC instead of NVMe | `flash.sh --erase-all jetson-agx-orin-devkit internal` |
 | Flash a modified BSP from a known-good one | build with `--no-flash` in the modified tree, flash with `--use-backup-image` from the original |
-| Back up and restore a whole board | `tools/backup-restore/`: see `README_backup_restore.txt` |
+| Back up and restore a whole board | `tools/backup_restore/l4t_backup_restore.sh` (next section) |
 | Secure Boot and disk encryption | `--uefi-keys`, `--uefi-enc`: see `tools/kernel_flash/README_initrd_flash.txt` |
 
 All of them need `sudo` and the board in recovery mode.
@@ -269,7 +269,7 @@ All of them need `sudo` and the board in recovery mode.
 
 <!--
 -k APP, flash.sh --no-systemimg (QSPI), flash.sh internal (eMMC), --use-backup-image,
-tools/backup-restore/README_backup_restore.txt, README_initrd_flash.txt workflows:
+tools/backup_restore/README_backup_restore.txt (path checked in the R39.2.2 BSP), README_initrd_flash.txt workflows:
 docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/SD/FlashingSupport.html
 NVIDIA's -k APP and QSPI examples use <board> <rootdev>; filled in here for the AGX Orin with NVMe.
 -->
